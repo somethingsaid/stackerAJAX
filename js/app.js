@@ -31,6 +31,29 @@ var showQuestion = function(question) {
 	return result;
 };
 
+// this function takes the answer object returned by the StackOverflow request
+// and returns new result to be appended to DOM
+var showAnswerer = function(answerer) {
+	var result = $('.templates .answerer').clone();
+
+    // show Top answerer's name and link
+	var answererElem = result.find('.answerer-name a');
+	answererElem.attr('href', answerer.user.link);
+	answererElem.text(answerer.user.display_name);
+
+	var answererID = result.find('.answerer-id');
+	answererID.text(answerer.user.user_id);
+
+	// show post count, score, etc
+	var postCount = result.find('.answerer-count');
+	postCount.text(answerer.post_count);
+	var score = result.find('.answerer-score');
+	score.text(answerer.score);
+	var reputation = result.find('.answerer-reputation');
+	reputation.text(answerer.user.reputation);
+
+    return result;
+};
 
 // this function takes the results object from StackOverflow
 // and returns the number of results and tags to be appended to DOM
@@ -81,6 +104,37 @@ var getUnanswered = function(tags) {
 	});
 };
 
+// takes in a single paramter for desired topic to search for
+// on StackOverflow.  Returns 30 top answerers of all time
+var getTopAnswerers = function(tag) {
+	// required parameters for StackOverflow's API
+	var request = {
+		site: 'stackoverflow',
+		pagesize: '30', // defaults to 30
+	};
+
+	var period = 'all_time'; // options are all_time or month
+
+	$.ajax({
+		url: "http://api.stackexchange.com/2.2/tags/" + tag + "/top-answerers/" + period,
+		data: request,
+		dataType: "jsonp",
+		type: "GET"
+	})
+	.done(function(result){
+		var searchResults = showSearchResults(tag, result.items.length);
+
+		$('.search-results').html(searchResults);
+		$.each(result.items, function(i, item) {
+			var answerer = showAnswerer(item);
+			$('.results').append(answerer);
+		});
+	})
+	.fail(function(jqXHR, error){
+		var errorElem = showError(error);
+		$('.search-results').append(errorElem);
+	});
+};
 
 $(document).ready( function() {
 	$('.unanswered-getter').submit( function(e){
@@ -90,5 +144,12 @@ $(document).ready( function() {
 		// get the value of the tags the user submitted
 		var tags = $(this).find("input[name='tags']").val();
 		getUnanswered(tags);
+	});
+
+	$('.inspiration-getter').submit(function(e){
+		e.preventDefault();
+		$('.results').html('');
+		var tag = $(this).find("input[name='answerers']").val();
+		getTopAnswerers(tag);
 	});
 });
