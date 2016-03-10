@@ -42,7 +42,7 @@ var showAnswerer = function(answerer) {
 	answererElem.text(answerer.user.display_name);
 
 	var answererID = result.find('.answerer-id');
-	answererID.text(answerer.user.user_id);
+	answererID.text("User ID: " + answerer.user.user_id);
 
 	// show post count, score, etc
 	var postCount = result.find('.answerer-count');
